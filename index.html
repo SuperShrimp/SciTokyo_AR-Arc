@@ -2,15 +2,98 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>360° Image Gallery - Office Spaces</title>
     <meta name="description" content="360° Image Gallery - Office Spaces">
+    
+    <!-- A-Frame核心库 -->
     <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-template-component@3.x.x/dist/aframe-template-component.min.js"></script>
     <script src="https://unpkg.com/aframe-layout-component@5.x.x/dist/aframe-layout-component.min.js"></script>
     <script src="https://unpkg.com/aframe-event-set-component@5.x.x/dist/aframe-event-set-component.min.js"></script>
     <script src="https://unpkg.com/aframe-proxy-event-component@2.1.0/dist/aframe-proxy-event-component.min.jss"></script>
     
-    <!-- Image link template to be reused. -->
+    <!-- 移动端优化样式 -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+      }
+      
+      /* 移动端UI控制面板 */
+      .mobile-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        gap: 10px;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+      }
+      
+      .room-btn {
+        padding: 8px 16px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+      }
+      
+      .room-btn:hover, .room-btn.active {
+        background: rgba(255,255,255,0.4);
+        transform: scale(1.05);
+      }
+      
+      /* VR按钮样式 */
+      .vr-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 10px 15px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      
+      /* 提示文字 */
+      .instruction {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        max-width: 200px;
+      }
+      
+      /* 隐藏在小屏幕上的元素 */
+      @media (max-width: 768px) {
+        .instruction {
+          font-size: 10px;
+          padding: 5px;
+          max-width: 150px;
+        }
+      }
+    </style>
+    
+    <!-- 图片链接模板 -->
     <script id="link" type="text/html">
       <a-entity class="link"
         geometry="primitive: plane; height: 1; width: 1"
@@ -23,31 +106,62 @@
     </script>
   </head>
   <body>
-    <a-scene>
+    <!-- 移动端控制面板 -->
+    <div class="mobile-controls">
+      <button class="room-btn active" onclick="switchRoom('m_lab')">M Lab</button>
+      <button class="room-btn" onclick="switchRoom('kitchen')">Kitchen</button>
+      <button class="room-btn" onclick="switchRoom('meeting_room')">Meeting Room</button>
+    </div>
+    
+    <!-- 使用提示 -->
+    <div class="instruction">
+      📱 手机：触摸拖拽旋转视角<br>
+      🖱️ 电脑：鼠标拖拽或WASD键
+    </div>
+    
+    <!-- VR模式按钮 -->
+    <button class="vr-button" onclick="enterVR()">🥽 VR Mode</button>
+
+    <a-scene 
+      vr-mode-ui="enabled: true" 
+      device-orientation-permission-ui="enabled: true"
+      background="color: #000"
+      renderer="antialias: true; colorManagement: true"
+      loading-screen="dotsColor: white; backgroundColor: #000">
+      
       <a-assets>
         <!-- 您的自定义图片 -->
         <img id="m_lab" crossorigin="anonymous" src="images/m_lab.jpg">
         <img id="kitchen" crossorigin="anonymous" src="images/kitchen.jpg">
         <img id="meeting_room" crossorigin="anonymous" src="images/meeting_room.jpg">
         
-        <!-- 备用图片（如果您的图片无法加载） -->
+        <!-- 备用图片 -->
         <img id="city" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/city.jpg">
         <img id="cubes" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/cubes.jpg">
         <img id="sechelt" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/sechelt.jpg">
         
-        <!-- 缩略图 - 使用备用图片作为缩略图 -->
+        <!-- 缩略图 -->
         <img id="m_lab-thumb" crossorigin="anonymous" src="thumb_images/thumb_lab.jpg">
         <img id="kitchen-thumb" crossorigin="anonymous" src="thumb_images/thumb_kitchen.jpg">
         <img id="meeting_room-thumb" crossorigin="anonymous" src="thumb_images/thumb_mr.jpg">
+        
+        <!-- 备用缩略图 -->
+        <img id="city-thumb" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/thumb-city.jpg">
+        <img id="cubes-thumb" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/thumb-cubes.jpg">
+        <img id="sechelt-thumb" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/thumb-sechelt.jpg">
         
         <!-- 音效 -->
         <audio id="click-sound" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/audio/click.ogg"></audio>
       </a-assets>
 
       <!-- 360度全景图片 -->
-      <a-sky id="image-360" radius="10" src="#m_lab"
-             animation__fade="property: components.material.material.color; type: color; from: #FFF; to: #000; dur: 300; startEvents: fade"
-             animation__fadeback="property: components.material.material.color; type: color; from: #000; to: #FFF; dur: 300; startEvents: animationcomplete__fade"></a-sky>
+      <a-sky 
+        id="image-360" 
+        radius="10" 
+        src="#m_lab"
+        animation__fade="property: components.material.material.color; type: color; from: #FFF; to: #000; dur: 300; startEvents: fade"
+        animation__fadeback="property: components.material.material.color; type: color; from: #000; to: #FFF; dur: 300; startEvents: animationcomplete__fade">
+      </a-sky>
 
       <!-- 图片链接缩略图 -->
       <a-entity id="links" layout="type: line; margin: 1.5" position="-1.5 -1 -4">
@@ -58,23 +172,111 @@
 
       <!-- 说明文字 -->
       <a-text 
-        value="A demo of W8E-7 floor" 
-        position="-1.5 -2.5 -4" 
+        id="room-title"
+        value="W8E-7 Floor - M Lab" 
+        position="0 2 -4" 
         align="center" 
         color="#FFF" 
-        scale="2 2 2">
+        scale="1.5 1.5 1.5"
+        geometry="primitive: plane; width: 6; height: 1"
+        material="color: rgba(0,0,0,0.5)">
       </a-text>
 
-      <!-- 摄像机 + 光标 -->
-      <a-entity camera look-controls wasd-controls>
+      <!-- 摄像机配置 - 移动端优化 -->
+      <a-entity 
+        id="cameraRig" 
+        camera 
+        look-controls="enabled: true; reverseMouseDrag: false; touchEnabled: true; magicWindowTrackingEnabled: true"
+        wasd-controls="enabled: true; acceleration: 20"
+        position="0 1.6 0">
+        
+        <!-- 光标 - 移动端优化 -->
         <a-cursor
           id="cursor"
+          position="0 0 -1"
+          geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
+          material="color: white; shader: flat; opacity: 0.8"
           animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
-          animation__fusing="property: fusing; startEvents: fusing; from: 1 1 1; to: 0.1 0.1 0.1; dur: 1500"
-          event-set__mouseenter="_event: mouseenter; color: springgreen"
-          event-set__mouseleave="_event: mouseleave; color: black"
-          raycaster="objects: .link"></a-cursor>
+          animation__mouseenter="property: scale; startEvents: mouseenter; to: 1.3 1.3 1.3; dur: 150"
+          animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150"
+          raycaster="objects: .link; far: 20">
+        </a-cursor>
       </a-entity>
     </a-scene>
+
+    <script>
+      // 房间切换功能
+      function switchRoom(roomId) {
+        const sky = document.querySelector('#image-360');
+        const title = document.querySelector('#room-title');
+        const buttons = document.querySelectorAll('.room-btn');
+        
+        // 更新按钮状态
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // 切换场景
+        sky.setAttribute('src', '#' + roomId);
+        
+        // 更新标题
+        const roomNames = {
+          'm_lab': 'W8E-7 Floor - M Lab',
+          'kitchen': 'W8E-7 Floor - Kitchen', 
+          'meeting_room': 'W8E-7 Floor - Meeting Room'
+        };
+        title.setAttribute('value', roomNames[roomId]);
+        
+        // 播放切换音效
+        const sound = document.querySelector('#click-sound');
+        if (sound) sound.components.sound.playSound();
+      }
+      
+      // 进入VR模式
+      function enterVR() {
+        const scene = document.querySelector('a-scene');
+        if (scene.enterVR) {
+          scene.enterVR();
+        }
+      }
+      
+      // 移动端方向传感器支持
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', function(event) {
+          // 启用设备方向控制
+        });
+      }
+      
+      // 防止移动端页面滚动
+      document.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+      }, { passive: false });
+      
+      // 全屏支持
+      document.addEventListener('dblclick', function() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      });
+      
+      // 检测图片加载错误，使用备用图片
+      const images = ['m_lab', 'kitchen', 'meeting_room'];
+      const backupImages = ['city', 'cubes', 'sechelt'];
+      
+      images.forEach((img, index) => {
+        const imgElement = document.querySelector('#' + img);
+        const thumbElement = document.querySelector('#' + img + '-thumb');
+        
+        imgElement.addEventListener('error', function() {
+          console.log('Loading backup image for', img);
+          this.src = document.querySelector('#' + backupImages[index]).src;
+        });
+        
+        thumbElement.addEventListener('error', function() {
+          this.src = document.querySelector('#' + backupImages[index] + '-thumb').src;
+        });
+      });
+    </script>
   </body>
 </html>
