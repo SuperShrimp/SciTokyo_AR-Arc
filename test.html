@@ -1,16 +1,80 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <script src="https://aframe.io/releases/0.2.0/aframe.min.js"></script>
+    <meta charset="utf-8">
+    <title>360° Image Gallery - Office Spaces</title>
+    <meta name="description" content="360° Image Gallery - Office Spaces">
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-template-component@3.x.x/dist/aframe-template-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-layout-component@5.x.x/dist/aframe-layout-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@5.x.x/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-proxy-event-component@2.1.0/dist/aframe-proxy-event-component.min.jss"></script>
+    
+    <!-- Image link template to be reused. -->
+    <script id="link" type="text/html">
+      <a-entity class="link"
+        geometry="primitive: plane; height: 1; width: 1"
+        material="shader: flat; src: ${thumb}"
+        sound="on: click; src: #click-sound"
+        event-set__mouseenter="scale: 1.2 1.2 1"
+        event-set__mouseleave="scale: 1 1 1"
+        event-set__click="_target: #image-360; _delay: 300; material.src: ${src}"
+        proxy-event="event: click; to: #image-360; as: fade"></a-entity>
+    </script>
   </head>
   <body>
     <a-scene>
-      <a-box color="#6173F4" width="4" height="10" depth="2"></a-box>
+      <a-assets>
+        <!-- 您的自定义图片 -->
+        <img id="m_lab" crossorigin="anonymous" src="images/m_lab.jpg">
+        <img id="kitchen" crossorigin="anonymous" src="images/kitchen.jpg">
+        <img id="meeting_room" crossorigin="anonymous" src="images/meeting_room.jpg">
+        
+        <!-- 备用图片（如果您的图片无法加载） -->
+        <img id="city" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/city.jpg">
+        <img id="cubes" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/cubes.jpg">
+        <img id="sechelt" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/sechelt.jpg">
+        
+        <!-- 缩略图 - 使用备用图片作为缩略图 -->
+        <img id="m_lab-thumb" crossorigin="anonymous" src="thumb_images/thumb_lab.jpg">
+        <img id="kitchen-thumb" crossorigin="anonymous" src="thumb_images/thumb_kitchen.jpg">
+        <img id="meeting_room-thumb" crossorigin="anonymous" src="thumb_images/thumb_mr.jpg">
+        
+        <!-- 音效 -->
+        <audio id="click-sound" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/audio/click.ogg"></audio>
+      </a-assets>
 
-      <a-collada-model src="monster.dae" position="-1 0.5 1" rotation="0 45 0 "></a-collada-model>
+      <!-- 360度全景图片 -->
+      <a-sky id="image-360" radius="10" src="#m_lab"
+             animation__fade="property: components.material.material.color; type: color; from: #FFF; to: #000; dur: 300; startEvents: fade"
+             animation__fadeback="property: components.material.material.color; type: color; from: #000; to: #FFF; dur: 300; startEvents: animationcomplete__fade"></a-sky>
 
-      <a-image src="fox.png"></a-image>
+      <!-- 图片链接缩略图 -->
+      <a-entity id="links" layout="type: line; margin: 1.5" position="-1.5 -1 -4">
+        <a-entity template="src: #link" data-src="#m_lab" data-thumb="#m_lab-thumb"></a-entity>
+        <a-entity template="src: #link" data-src="#kitchen" data-thumb="#kitchen-thumb"></a-entity>
+        <a-entity template="src: #link" data-src="#meeting_room" data-thumb="#meeting_room-thumb"></a-entity>
+      </a-entity>
 
-      <a-sky color="#ECECEC"></a-sky>
+      <!-- 说明文字 -->
+      <a-text 
+        value="A demo of W8E-7 floor" 
+        position="-1.5 -2.5 -4" 
+        align="center" 
+        color="#FFF" 
+        scale="2 2 2">
+      </a-text>
+
+      <!-- 摄像机 + 光标 -->
+      <a-entity camera look-controls wasd-controls>
+        <a-cursor
+          id="cursor"
+          animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
+          animation__fusing="property: fusing; startEvents: fusing; from: 1 1 1; to: 0.1 0.1 0.1; dur: 1500"
+          event-set__mouseenter="_event: mouseenter; color: springgreen"
+          event-set__mouseleave="_event: mouseleave; color: black"
+          raycaster="objects: .link"></a-cursor>
+      </a-entity>
     </a-scene>
   </body>
 </html>
