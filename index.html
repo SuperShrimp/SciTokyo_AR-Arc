@@ -2,281 +2,147 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>360° Image Gallery - Office Spaces</title>
-    <meta name="description" content="360° Image Gallery - Office Spaces">
-    
-    <!-- A-Frame核心库 -->
-    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-template-component@3.x.x/dist/aframe-template-component.min.js"></script>
-    <script src="https://unpkg.com/aframe-layout-component@5.x.x/dist/aframe-layout-component.min.js"></script>
-    <script src="https://unpkg.com/aframe-event-set-component@5.x.x/dist/aframe-event-set-component.min.js"></script>
-    <script src="https://unpkg.com/aframe-proxy-event-component@2.1.0/dist/aframe-proxy-event-component.min.jss"></script>
-    
-    <!-- 移动端优化样式 -->
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-      }
-      
-      /* 移动端UI控制面板 */
-      .mobile-controls {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        display: flex;
-        gap: 10px;
-        background: rgba(0,0,0,0.7);
-        padding: 10px;
-        border-radius: 25px;
-        backdrop-filter: blur(10px);
-      }
-      
-      .room-btn {
-        padding: 8px 16px;
-        background: rgba(255,255,255,0.2);
-        color: white;
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 20px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        user-select: none;
-      }
-      
-      .room-btn:hover, .room-btn.active {
-        background: rgba(255,255,255,0.4);
-        transform: scale(1.05);
-      }
-      
-      /* VR按钮样式 */
-      .vr-button {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-        padding: 10px 15px;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 12px;
-      }
-      
-      /* 提示文字 */
-      .instruction {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 1000;
-        color: white;
-        background: rgba(0,0,0,0.7);
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        max-width: 200px;
-      }
-      
-      /* 隐藏在小屏幕上的元素 */
-      @media (max-width: 768px) {
-        .instruction {
-          font-size: 10px;
-          padding: 5px;
-          max-width: 150px;
-        }
-      }
-    </style>
-    
-    <!-- 图片链接模板 -->
-    <script id="link" type="text/html">
-      <a-entity class="link"
-        geometry="primitive: plane; height: 1; width: 1"
-        material="shader: flat; src: ${thumb}"
-        sound="on: click; src: #click-sound"
-        event-set__mouseenter="scale: 1.2 1.2 1"
-        event-set__mouseleave="scale: 1 1 1"
-        event-set__click="_target: #image-360; _delay: 300; material.src: ${src}"
-        proxy-event="event: click; to: #image-360; as: fade"></a-entity>
-    </script>
+    <title>Spatial UI</title>
+    <meta name="description" content="Spatial UI • A-Frame">
+    <script src="src/aframe-master.js"></script>
+
+    <script src="src/ui-controller.js"></script>
+    <script src="src/spatial-ui/spatial-utils.js"></script>
+    <script src="src/spatial-ui/spatial-window.js"></script>
+    <script src="src/spatial-ui/spatial-modal.js"></script>
+    <script src="src/spatial-ui/spatial-modal-image.js"></script>
+    <script src="src/spatial-ui/spatial-button.js"></script>
+    <script src="src/spatial-ui/spatial-close-button.js"></script>
+    <script src="src/spatial-ui/spatial-hero-image.js"></script>
+    <script src="src/tile.js"></script>
   </head>
   <body>
-    <!-- 移动端控制面板 -->
-    <div class="mobile-controls">
-      <button class="room-btn active" onclick="switchRoom('m_lab')">M Lab</button>
-      <button class="room-btn" onclick="switchRoom('kitchen')">Kitchen</button>
-      <button class="room-btn" onclick="switchRoom('meeting_room')">Meeting Room</button>
-    </div>
-    
-    <!-- 使用提示 -->
-    <div class="instruction">
-      📱 Phones: Touch the screen to spin<br>
-      🖱️ Computers: Mouse & Use WASD
-    </div>
-    
-    <!-- VR模式按钮 -->
-    <button class="vr-button" onclick="enterVR()">🥽 VR Mode</button>
-
-    <a-scene 
-      vr-mode-ui="enabled: true" 
-      device-orientation-permission-ui="enabled: true"
-      background="color: #000"
-      renderer="antialias: true; colorManagement: true"
-      loading-screen="dotsColor: white; backgroundColor: #000">
-      
+    <a-scene cursor="rayOrigin: mouse;" raycaster="objects: .tile, .start-button, .close-button" ui-controller>
       <a-assets>
-        <!-- 您的自定义图片 -->
-        <img id="m_lab" crossorigin="anonymous" src="images/m_lab.jpg">
-        <img id="kitchen" crossorigin="anonymous" src="images/kitchen.jpg">
-        <img id="meeting_room" crossorigin="anonymous" src="images/meeting_room.jpg">
-        
-        <!-- 备用图片 -->
-        <img id="city" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/city.jpg">
-        <img id="cubes" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/cubes.jpg">
-        <img id="sechelt" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/sechelt.jpg">
-        
-        <!-- 缩略图 -->
-        <img id="m_lab-thumb" crossorigin="anonymous" src="thumb_images/thumb_lab.jpg">
-        <img id="kitchen-thumb" crossorigin="anonymous" src="thumb_images/thumb_kitchen.jpg">
-        <img id="meeting_room-thumb" crossorigin="anonymous" src="thumb_images/thumb_mr.jpg">
-        
-        <!-- 备用缩略图 -->
-        <img id="city-thumb" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/thumb-city.jpg">
-        <img id="cubes-thumb" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/thumb-cubes.jpg">
-        <img id="sechelt-thumb" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/thumb-sechelt.jpg">
-        
-        <!-- 音效 -->
-        <audio id="click-sound" crossorigin="anonymous" src="https://cdn.aframe.io/360-image-gallery-boilerplate/audio/click.ogg"></audio>
+        <a-mixin
+          id="tile" tile="width: 0.400; height: 0.285"
+          animation__scale="property: scale; to: 1.02 1.02 1.02; dur: 100; startEvents: mouseenter"
+          animation__scale_reverse="property: scale; to: 1 1 1; dur: 100; startEvents: mouseleave">
+        </a-mixin>
+        <a-mixin
+          id="focus-animation"
+          animation__scale="property: object3D.position.z; to: -0.05; dur: 100; startEvents: unfocused"
+          animation__scale_reverse="property: object3D.position.z; to: 0; dur: 100; startEvents: focused">
+        </a-mixin>
+        <img id="leaving-room" src="images/meeting room/leave room.jpg" crossorigin="anonymous">
+        <img id="hero-image" src="images/sciencetokyo.jpg" crossorigin="anonymous">
       </a-assets>
+      <a-sky src="#leaving-room" rotation="0 -90 0"></a-sky>
+      
+      <a-entity position="0 1.7 -1">
+        <a-entity spatial-modal="width: 1.2; height: 0.72" visible="false">
+          <a-entity spatial-modal-image="width: 0.6; height: 0.72" position="-0.3 0 0.001"></a-entity>
+          <a-entity spatial-close-button="" position="0.55 0.31 0.001" class="close-button"></a-entity>
+          <a-text font="kelsonsans" class="movie-title" value="Hayao Miyazaki" align="left" width="0.75" position="0.03 0.2 0.001"></a-text>
+          <a-text font="kelsonsans" height="1" class="movie-synopsis" value="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." align="left" width="0.5" position="0.03 0.08 0.001"></a-text>
+        </a-entity>
 
-      <!-- 360度全景图片 -->
-      <a-sky 
-        id="image-360" 
-        radius="10" 
-        src="#m_lab"
-        animation__fade="property: components.material.material.color; type: color; from: #FFF; to: #000; dur: 300; startEvents: fade"
-        animation__fadeback="property: components.material.material.color; type: color; from: #000; to: #FFF; dur: 300; startEvents: animationcomplete__fade">
-      </a-sky>
+        <a-entity mixin="focus-animation" spatial-window="width: 1.775; height: 1">
+          <a-entity spatial-hero-image="src: #hero-image; width: 1.775; height: 1" position="0 0 0.001">
+            <a-entity spatial-button position="0 0.06 0.001" class="start-button"></a-entity>
+          </a-entity>
 
-      <!-- 图片链接缩略图 -->
-      <a-entity id="links" layout="type: line; margin: 1.5" position="-1.5 -1 -4">
-        <a-entity template="src: #link" data-src="#m_lab" data-thumb="#m_lab-thumb"></a-entity>
-        <a-entity template="src: #link" data-src="#kitchen" data-thumb="#kitchen-thumb"></a-entity>
-        <a-entity template="src: #link" data-src="#meeting_room" data-thumb="#meeting_room-thumb"></a-entity>
+          <a-entity id="image-grid" visible="false">
+            <!-- row -->
+            <a-entity
+              mixin="tile"
+              title="Meeting room"
+              synopsis='A meeting room for OCRD-oedolytics members. please refer to this link for more details.'
+              tile="src: images/icons/meet.png"
+              position="-0.6435 0.318 0.01">
+            </a-entity>
+            <a href="scenes/meeting.html" target="_blank"
+              style="position:fixed;top:180px;left:60px;z-index:2000;padding:8px 16px;background:#4CAF50;color:#fff;border-radius:6px;text-decoration:none;font-size:15px;">
+              Meeting Room
+            </a>
+            <a-entity
+              mixin="tile"
+              title="Ponyo (2008)"
+              synopsis="During a forbidden excursion to see the surface world, a goldfish princess encounters a human boy named Sosuke, who gives her the name Ponyo. Ponyo longs to become human, and as her friendship with Sosuke grows, she becomes more humanlike."
+              tile="src: https://cdn.aframe.io/examples/ui/ponyo.jpg"
+              position="-0.2150 0.320 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="The Wind Rises (2013)"
+              synopsis="A lifelong love of flight inspires Japanese aviation engineer Jiro Horikoshi (Hideaki Anno), whose storied career includes the creation of the A6M World War II fighter plane."
+              tile="src: https://cdn.aframe.io/examples/ui/wind-raises1.jpg"
+              position="0.2135 0.320 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="The Wind Rises (2013)"
+              synopsis="A lifelong love of flight inspires Japanese aviation engineer Jiro Horikoshi (Hideaki Anno), whose storied career includes the creation of the A6M World War II fighter plane."
+              tile="src: https://cdn.aframe.io/examples/ui/wind-raises2.jpg"
+              position="0.6420 0.320 0.01"></a-entity>
+            <!-- row -->
+            <a-entity
+              mixin="tile"
+              title="The Wind Rises (2013)"
+              synopsis="A lifelong love of flight inspires Japanese aviation engineer Jiro Horikoshi (Hideaki Anno), whose storied career includes the creation of the A6M World War II fighter plane."
+              tile="src: https://cdn.aframe.io/examples/ui/kazetachinu.jpg"
+              position="-0.6435 0 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="Spirited Away (2001)"
+              synopsis="Miyazaki, 10-year-old Chihiro (Rumi Hiiragi) and her parents (Takashi Naitô, Yasuko Sawaguchi) stumble upon a seemingly abandoned amusement park. After her mother and father are turned into giant pigs, Chihiro meets the mysterious Haku."
+              tile="src: https://cdn.aframe.io/examples/ui/spirited-away1.jpg"
+              position="-0.2150 0 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="Spirited Away (2001)"
+              synopsis="Miyazaki, 10-year-old Chihiro (Rumi Hiiragi) and her parents (Takashi Naitô, Yasuko Sawaguchi) stumble upon a seemingly abandoned amusement park. After her mother and father are turned into giant pigs, Chihiro meets the mysterious Haku."
+              tile="src: https://cdn.aframe.io/examples/ui/spirited-away2.jpg"
+              position="0.2135 0 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="Spirited Away (2001)"
+              synopsis="Miyazaki, 10-year-old Chihiro (Rumi Hiiragi) and her parents (Takashi Naitô, Yasuko Sawaguchi) stumble upon a seemingly abandoned amusement park. After her mother and father are turned into giant pigs, Chihiro meets the mysterious Haku."
+              tile="src: https://cdn.aframe.io/examples/ui/spirited-away3.jpg"
+              position="0.6420 0 0.01"></a-entity>
+
+            <!-- row -->
+            <a-entity
+              mixin="tile"
+              title="Tales from Earthsea (2006)"
+              synopsis="Something bizarre has come over the land. The kingdom is deteriorating. People are beginning to act strange... What's even more strange is that people are beginning to see dragons, which shouldn't enter the world of humans."
+              tile="src: https://cdn.aframe.io/examples/ui/earth-sea1.jpg"
+              position="-0.6435 -0.320 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="Tales from Earthsea (2006)"
+              synopsis="Something bizarre has come over the land. The kingdom is deteriorating. People are beginning to act strange... What's even more strange is that people are beginning to see dragons, which shouldn't enter the world of humans."
+              tile="src: https://cdn.aframe.io/examples/ui/earth-sea2.jpg"
+              position="-0.2150 -0.320 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="Tales from Earthsea (2006)"
+              synopsis="Something bizarre has come over the land. The kingdom is deteriorating. People are beginning to act strange... What's even more strange is that people are beginning to see dragons, which shouldn't enter the world of humans."
+              tile="src: https://cdn.aframe.io/examples/ui/earth-sea3.jpg"
+              position="0.2135 -0.320 0.01"></a-entity>
+            <a-entity
+              mixin="tile"
+              title="From Up on Poppy Hill (2011)"
+              synopsis="It's 1963 and Japan is in the midst of swift modernisation, leaving behind the Second World War's painful memories and focusing on a brighter future, symbolised by the coming year's Tokyo Olympics."
+              tile="src: https://cdn.aframe.io/examples/ui/poppy-hill1.jpg"
+              position="0.6420 -0.320 0.01"></a-entity>
+          </a-entity>
+        </a-entity>
       </a-entity>
 
-      <!-- 说明文字 -->
-      <a-text 
-        id="room-title"
-        value="W8E-7 Floor - M Lab" 
-        position="0 2 -4" 
-        align="center" 
-        color="#FFF" 
-        scale="1.5 1.5 1.5"
-        geometry="primitive: plane; width: 6; height: 1"
-        material="color: rgba(0,0,0,0.5)">
-      </a-text>
-
-      <!-- 摄像机配置 - 移动端优化 -->
-      <a-entity 
-        id="cameraRig" 
-        camera 
-        look-controls="enabled: true; reverseMouseDrag: false; touchEnabled: true; magicWindowTrackingEnabled: true"
-        wasd-controls="enabled: true; acceleration: 20"
-        position="0 1.6 0">
-        
-        <!-- 光标 - 移动端优化 -->
-        <a-cursor
-          id="cursor"
-          position="0 0 -1"
-          geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
-          material="color: white; shader: flat; opacity: 0.8"
-          animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
-          animation__mouseenter="property: scale; startEvents: mouseenter; to: 1.3 1.3 1.3; dur: 150"
-          animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150"
-          raycaster="objects: .link; far: 20">
-        </a-cursor>
+      <a-entity position="0 1.6 0" look-controls camera>
+        <a-entity class="camera-cursor"
+                  raycaster="objects: .tile, .start-button, .close-button"
+                  cursor
+                  geometry="primitive: circle; radius: 0.005"
+                  material="color: #283644; shader: flat"
+                  position="0 0 -0.75"></a-entity>
       </a-entity>
+      <a-entity hand-tracking-controls="hand: left"></a-entity>
+      <a-entity hand-tracking-controls="hand: right"></a-entity>
     </a-scene>
-
-    <script>
-      // 房间切换功能
-      function switchRoom(roomId) {
-        const sky = document.querySelector('#image-360');
-        const title = document.querySelector('#room-title');
-        const buttons = document.querySelectorAll('.room-btn');
-        
-        // 更新按钮状态
-        buttons.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        
-        // 切换场景
-        sky.setAttribute('src', '#' + roomId);
-        
-        // 更新标题
-        const roomNames = {
-          'm_lab': 'W8E-7 Floor - M Lab',
-          'kitchen': 'W8E-7 Floor - Kitchen', 
-          'meeting_room': 'W8E-7 Floor - Meeting Room'
-        };
-        title.setAttribute('value', roomNames[roomId]);
-        
-        // 播放切换音效
-        const sound = document.querySelector('#click-sound');
-        if (sound) sound.components.sound.playSound();
-      }
-      
-      // 进入VR模式
-      function enterVR() {
-        const scene = document.querySelector('a-scene');
-        if (scene.enterVR) {
-          scene.enterVR();
-        }
-      }
-      
-      // 移动端方向传感器支持
-      if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', function(event) {
-          // 启用设备方向控制
-        });
-      }
-      
-      // 防止移动端页面滚动
-      document.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-      }, { passive: false });
-      
-      // 全屏支持
-      document.addEventListener('dblclick', function() {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
-        } else {
-          document.exitFullscreen();
-        }
-      });
-      
-      // 检测图片加载错误，使用备用图片
-      const images = ['m_lab', 'kitchen', 'meeting_room'];
-      const backupImages = ['city', 'cubes', 'sechelt'];
-      
-      images.forEach((img, index) => {
-        const imgElement = document.querySelector('#' + img);
-        const thumbElement = document.querySelector('#' + img + '-thumb');
-        
-        imgElement.addEventListener('error', function() {
-          console.log('Loading backup image for', img);
-          this.src = document.querySelector('#' + backupImages[index]).src;
-        });
-        
-        thumbElement.addEventListener('error', function() {
-          this.src = document.querySelector('#' + backupImages[index] + '-thumb').src;
-        });
-      });
-    </script>
   </body>
 </html>
