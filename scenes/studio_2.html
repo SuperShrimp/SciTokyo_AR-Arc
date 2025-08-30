@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Studio 02</title>
+    <meta name="description" content="Studio 02">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #ui-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .control-button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .control-button:hover {
+            background: #45a049;
+        }
+        
+        .control-button.active {
+            background: #FF6B6B;
+        }
+        
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .hotspot {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .hotspot:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+        <!-- 返回首页按钮 -->
+    <div id="back-to-index" style="position: fixed; top: 20px; right: 20px; z-index: 1100;">
+        <button onclick="window.location.href='../index.html';"
+                style="background:#283644;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:15px;">
+            Back to Home Page
+        </button>
+    </div>
+
+    <!-- UI 控制面板 -->
+    <div id="ui-controls">
+        <h3 style="margin: 0 0 10px 0;">view switch</h3>
+        <button class="control-button active" onclick="switchView(0)">view 1</button>
+        <button class="control-button" onclick="switchView(1)">view 2</button>
+        <button class="control-button" onclick="switchView(2)">view 3</button>
+    </div>
+    
+    <!-- 信息面板 -->
+    <div id="info">
+        <div>current view: <span id="current-view">view 1</span></div>
+        <div>use the mouse to click and scroll, click buttons for view switch</div>
+    </div>
+
+    <a-scene vr-mode-ui="enabled: false" background="color: #000">
+        <!-- 资源预加载 -->
+        <a-assets>
+            <!-- 示例图片资源 - 请替换为你的实际图片路径 -->
+            <img id="view1" src="../images/Studio_2/01.jpg" crossorigin="anonymous">
+            <img id="view2" src="../images/Studio_2/02.jpg" crossorigin="anonymous">
+            <img id="view3" src="../images/Studio_2/03.jpg" crossorigin="anonymous">
+        </a-assets>
+
+        <!-- 全景天空盒 -->
+        <a-sky id="panorama" 
+               src="#view1" 
+               rotation="0 -130 0"
+               animation__fade="property: material.opacity; 
+                                to: 1; 
+                                dur: 1000; 
+                                easing: easeInOutQuad">
+        </a-sky>
+
+
+
+        <!-- 摄像机和控制器 -->
+        <a-entity id="cameraRig" position="0 1.6 0">
+            <a-camera 
+                look-controls="enabled: true; pointerLockEnabled: false"
+                wasd-controls="enabled: false"
+                cursor="rayOrigin: mouse"
+                raycaster="objects: .hotspot">
+            </a-camera>
+        </a-entity>
+
+        <!-- 光照 -->
+        <a-light type="ambient" color="#404040" intensity="0.4"></a-light>
+    </a-scene>
+
+    <script>
+        // 全景图片数据配置
+        const viewsData = [
+            {
+                name: "view 1",
+                image: "#view1",
+                rotation: "0 -130 0",
+                hotspots: [
+                    { position: "3 0 -3", target: 1, color: "#FF6B6B", label: "view 2" },
+                    { position: "-3 0 -3", target: 2, color: "#4ECDC4", label: "view 3" }
+                ]
+            },
+            {
+                name: "view 2", 
+                image: "#view2",
+                rotation: "0 -90 0",
+                hotspots: [
+                    { position: "-3 0 -3", target: 0, color: "#96CEB4", label: "view 1" },
+                    { position: "3 0 -3", target: 2, color: "#4ECDC4", label: "view 3" }
+                ]
+            },
+            {
+                name: "view 3",
+                image: "#view3", 
+                rotation: "0 0 0",
+                hotspots: [
+                    { position: "3 0 3", target: 0, color: "#96CEB4", label: "view 1" },
+                    { position: "-3 0 3", target: 1, color: "#FF6B6B", label: "view 2" }
+                ]
+            },
+        ];
+
+        let currentViewIndex = 0;
+
+        // 切换view函数
+        function switchView(viewIndex) {
+            if (viewIndex === currentViewIndex) return;
+            
+            const viewData = viewsData[viewIndex];
+            const panorama = document.querySelector('#panorama');
+            const currentViewSpan = document.querySelector('#current-view');
+            
+            // 淡出效果
+            panorama.setAttribute('animation__fadeout', {
+                property: 'material.opacity',
+                to: 0,
+                dur: 500,
+                easing: 'easeInOutQuad'
+            });
+            
+            // 延迟切换图片和淡入
+            setTimeout(() => {
+                panorama.setAttribute('src', viewData.image);
+                panorama.setAttribute('rotation', viewData.rotation);
+                
+                panorama.setAttribute('animation__fadein', {
+                    property: 'material.opacity',
+                    to: 1,
+                    dur: 500,
+                    easing: 'easeInOutQuad'
+                });
+                
+                // 更新UI
+                updateUI(viewIndex);
+                updateHotspots(viewData.hotspots);
+                currentViewSpan.textContent = viewData.name;
+                
+            }, 500);
+            
+            currentViewIndex = viewIndex;
+        }
+
+        // 更新UI按钮状态
+        function updateUI(activeIndex) {
+            const buttons = document.querySelectorAll('.control-button');
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === activeIndex);
+            });
+        }
+
+        // 更新热点位置和目标
+        function updateHotspots(hotspots) {
+            const hotspotsContainer = document.querySelector('#hotspots');
+            hotspotsContainer.innerHTML = '';
+            
+            hotspots.forEach((hotspot, index) => {
+                const hotspotEl = document.createElement('a-sphere');
+                hotspotEl.setAttribute('class', 'hotspot');
+                hotspotEl.setAttribute('position', hotspot.position);
+                hotspotEl.setAttribute('radius', '0.2');
+                hotspotEl.setAttribute('color', hotspot.color);
+                hotspotEl.setAttribute('material', 'opacity: 0.8');
+                hotspotEl.setAttribute('animation__mouseenter', {
+                    property: 'scale',
+                    to: '1.3 1.3 1.3',
+                    startEvents: 'mouseenter',
+                    dur: 200
+                });
+                hotspotEl.setAttribute('animation__mouseleave', {
+                    property: 'scale',
+                    to: '1 1 1',
+                    startEvents: 'mouseleave',
+                    dur: 200
+                });
+                
+                // 添加点击事件
+                hotspotEl.addEventListener('click', () => switchView(hotspot.target));
+                
+                // 添加文字标签
+                const textEl = document.createElement('a-text');
+                textEl.setAttribute('value', hotspot.label);
+                textEl.setAttribute('position', '0 0.5 0');
+                textEl.setAttribute('align', 'center');
+                textEl.setAttribute('color', 'white');
+                textEl.setAttribute('scale', '2 2 2');
+                textEl.setAttribute('billboard', 'true');
+                
+                hotspotEl.appendChild(textEl);
+                hotspotsContainer.appendChild(hotspotEl);
+            });
+        }
+
+        // 键盘导航支持
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case '1':
+                    switchView(0);
+                    break;
+                case '2':
+                    switchView(1);
+                    break;
+                case '3':
+                    switchView(2);
+                    break;
+                case 'ArrowLeft':
+                    switchView((currentViewIndex - 1 + viewsData.length) % viewsData.length);
+                    break;
+                case 'ArrowRight':
+                    switchView((currentViewIndex + 1) % viewsData.length);
+                    break;
+            }
+        });
+
+        // 初始化热点
+        document.addEventListener('DOMContentLoaded', () => {
+            updateHotspots(viewsData[0].hotspots);
+        });
+    </script>
+</body>
+</html>
