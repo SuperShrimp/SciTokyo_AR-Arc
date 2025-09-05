@@ -53,15 +53,6 @@
             color: white;
             font-size: 14px;
         }
-        
-        .hotspot {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .hotspot:hover {
-            transform: scale(1.2);
-        }
     </style>
 </head>
 <body>
@@ -99,23 +90,19 @@
         <!-- 全景天空盒 -->
         <a-sky id="panorama" 
                src="#view1" 
-               rotation="0 -130 0"
+               rotation="0 -90 0"
                animation__fade="property: material.opacity; 
                                 to: 1; 
                                 dur: 1000; 
                                 easing: easeInOutQuad">
         </a-sky>
 
-        <!-- 热点容器，必须添加 -->
-        <a-entity id="hotspots"></a-entity>
-
         <!-- 摄像机和控制器 -->
-        <a-entity id="cameraRig" position="0 1.6 0">
+        <a-entity id="cameraRig" position="0 5 0" >
             <a-camera 
                 look-controls="enabled: true; pointerLockEnabled: false"
                 wasd-controls="enabled: false"
-                cursor="rayOrigin: mouse"
-                raycaster="objects: .hotspot">
+                cursor="rayOrigin: mouse">
             </a-camera>
         </a-entity>
 
@@ -129,29 +116,17 @@
             {
                 name: "view 1",
                 image: "#view1",
-                rotation: "0 -130 0",
-                hotspots: [
-                    { position: "3 0 -3", target: 1, color: "#FF6B6B", label: "view 2" },
-                    { position: "-3 0 -3", target: 2, color: "#4ECDC4", label: "view 3" }
-                ]
+                rotation: "0 -130 0"
             },
             {
                 name: "view 2", 
                 image: "#view2",
-                rotation: "0 -90 0",
-                hotspots: [
-                    { position: "-3 0 -3", target: 0, color: "#96CEB4", label: "view 1" },
-                    { position: "3 0 -3", target: 2, color: "#4ECDC4", label: "view 3" }
-                ]
+                rotation: "0 -90 0"
             },
             {
                 name: "view 3",
                 image: "#view3", 
-                rotation: "0 0 0",
-                hotspots: [
-                    { position: "3 0 3", target: 0, color: "#96CEB4", label: "view 1" },
-                    { position: "-3 0 3", target: 1, color: "#FF6B6B", label: "view 2" }
-                ]
+                rotation: "0 0 0"
             },
         ];
 
@@ -187,7 +162,6 @@
                 
                 // 更新UI
                 updateUI(viewIndex);
-                updateHotspots(viewData.hotspots);
                 currentViewSpan.textContent = viewData.name;
                 
             }, 500);
@@ -200,48 +174,6 @@
             const buttons = document.querySelectorAll('.control-button');
             buttons.forEach((button, index) => {
                 button.classList.toggle('active', index === activeIndex);
-            });
-        }
-
-        // 更新热点位置和目标
-        function updateHotspots(hotspots) {
-            const hotspotsContainer = document.querySelector('#hotspots');
-            hotspotsContainer.innerHTML = '';
-            
-            hotspots.forEach((hotspot, index) => {
-                const hotspotEl = document.createElement('a-sphere');
-                hotspotEl.setAttribute('class', 'hotspot');
-                hotspotEl.setAttribute('position', hotspot.position);
-                hotspotEl.setAttribute('radius', '0.2');
-                hotspotEl.setAttribute('color', hotspot.color);
-                hotspotEl.setAttribute('material', 'opacity: 0.8');
-                hotspotEl.setAttribute('animation__mouseenter', {
-                    property: 'scale',
-                    to: '1.3 1.3 1.3',
-                    startEvents: 'mouseenter',
-                    dur: 200
-                });
-                hotspotEl.setAttribute('animation__mouseleave', {
-                    property: 'scale',
-                    to: '1 1 1',
-                    startEvents: 'mouseleave',
-                    dur: 200
-                });
-                
-                // 添加点击事件
-                hotspotEl.addEventListener('click', () => switchView(hotspot.target));
-                
-                // 添加文字标签
-                const textEl = document.createElement('a-text');
-                textEl.setAttribute('value', hotspot.label);
-                textEl.setAttribute('position', '0 0.5 0');
-                textEl.setAttribute('align', 'center');
-                textEl.setAttribute('color', 'white');
-                textEl.setAttribute('scale', '2 2 2');
-                textEl.setAttribute('billboard', 'true');
-                
-                hotspotEl.appendChild(textEl);
-                hotspotsContainer.appendChild(hotspotEl);
             });
         }
 
@@ -266,9 +198,10 @@
             }
         });
 
-        // 初始化热点
+        // 初始化UI
         document.addEventListener('DOMContentLoaded', () => {
-            updateHotspots(viewsData[0].hotspots);
+            // 可以在这里设置初始UI状态，如果需要的话
+            updateUI(currentViewIndex);
         });
     </script>
 </body>
