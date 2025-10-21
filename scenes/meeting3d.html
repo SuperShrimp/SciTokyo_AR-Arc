@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Meeting 3D</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://quadjr.github.io/aframe-gaussian-splatting/index.js"></script>
+  </head>
+  <body>
+    <a-scene renderer="antialias: false" stats>
+      <!-- 在场景中添加相机实体（替代默认相机），并使用锁定组件 & 键盘移动组件 -->
+      <a-entity id="playerCamera" camera position="1 0 0" 
+                look-controls="pointerLockEnabled: false"
+                lock-pitch-roll
+                keyboard-movement="speed: 2">
+      </a-entity>
+
+      <!-- 修正：属性语法和路径（使用正斜杠） -->
+      <a-entity gaussian_splatting="src: ../pts/Meeting_Room.ply" rotation="0 0 0" position="0 1.5 -2"></a-entity>
+    </a-scene>
+
+    <!-- 注册锁定俯仰/翻滚和键盘移动组件 -->
+    <script>
+      AFRAME.registerComponent('lock-pitch-roll', {
+        tick: function () {
+          const obj = this.el.object3D;
+          if (!obj) return;
+          obj.rotation.x = 0;
+          obj.rotation.z = 0;
+        }
+      });
+
+      AFRAME.registerComponent('keyboard-movement', {
+        schema: { speed: { type: 'number', default: 2 } },
+        init: function () {
+          this.keys = {};
+          this.velocity = new THREE.Vector3();
+          this.direction = new THREE.Vector3();
+          this._onKeyDown = (e) => { this.keys[e.code] = true; };
+          this._onKeyUp = (e) => { this.keys[e.code] = false; };
+          window.addEventListener('keydown', this._onKeyDown);
+          window.addEventListener('keyup', this._onKeyUp);
+        },
+        remove: function () {
+          window.removeEventListener('keydown', this._onKeyDown);
+          window.removeEventListener('keyup', this._onKeyUp);
+        },
+        tick: function (time, delta) {
+          const dt = delta / 1000;
+          const el = this.el;
+          const speed = this.data.speed;
+          // WASD or arrow keys
+          const forward = this.keys['KeyW'] || this.keys['ArrowUp'];
+          const backward = this.keys['KeyS'] || this.keys['ArrowDown'];
+          const left = this.keys['KeyA'] || this.keys['ArrowLeft'];
+          const right = this.keys['KeyD'] || this.keys['ArrowRight'];
+          // build local direction (z forward)
+          this.direction.set(0, 0, 0);
+          if (forward) this.direction.z -= 1;
+          if (backward) this.direction.z += 1;
+          if (left) this.direction.x -= 1;
+          if (right) this.direction.x += 1;
+          if (this.direction.lengthSq() === 0) return;
+          this.direction.normalize();
+          // transform by camera rotation (preserves yaw from look-controls)
+          this.direction.applyQuaternion(el.object3D.quaternion);
+          // zero out y to keep movement horizontal
+          this.direction.y = 0;
+          // move
+          el.object3D.position.addScaledVector(this.direction, speed * dt);
+        }
+      });
+    </script>
+  </body>
+</html>
