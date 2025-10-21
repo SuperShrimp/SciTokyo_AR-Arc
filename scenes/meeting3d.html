@@ -7,6 +7,14 @@
     <script src="https://quadjr.github.io/aframe-gaussian-splatting/index.js"></script>
   </head>
   <body>
+    <!-- 返回 2D Meeting 页面 按钮 -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1100;">
+      <button onclick="window.location.href='meeting.html'"
+              style="background:#283644;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-size:14px;">
+        Back
+      </button>
+    </div>
+
     <a-scene renderer="antialias: false" stats>
       <!-- 在场景中添加相机实体（替代默认相机），并使用锁定组件 & 键盘移动组件 -->
       <a-entity id="playerCamera" camera position="1 0 0" 
